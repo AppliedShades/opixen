@@ -1,0 +1,25 @@
+#ifndef PRESSX_ENGINE_STATUS_H
+#define PRESSX_ENGINE_STATUS_H
+
+    #define NEEDS_LOADING 1
+    #define LOADING_COMPLETE 1 << 1
+    #define NEEDS_DELETING 1 << 2
+    #define SAFE_TO_DELETE 1 << 3
+    #define LOADED_IN_GPU 1 << 4
+    #define MODIFIED 1 << 5
+    
+    //errors
+    #define GLFW_INIT_FAIL  -11
+    #define GLFW_WINDOW_CREATION_FAIL  -12
+    #define GLAD_INIT_FAIL  -13
+    #define SHADER_COMPILE_FAIL  -14
+    #define SHADER_PROGRAM_LINKING_FAIL  -15
+    #define INVALID_DATABASE_REQUEST1 -16
+    #define INVALID_DATABASE_REQUEST2 -17
+    #define INVALID_DATABASE_REQUEST3 -18
+    #define INVALID_DATABASE_REQUEST4 -19
+    #define INVALID_DATABASE_REQUEST5 -20
+    #define INVALID_DATABASE_REQUEST6 -21
+    #define STBI_LOAD_IMAGE_FAIL -22
+
+#endif
