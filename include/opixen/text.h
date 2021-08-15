@@ -40,14 +40,14 @@ namespace OPIXEN{
             unsigned int VAO, VBO;
         public:
             float ysub=0,ysuper=0,fully=0;
-            TextRenderer(RENDERER& rn);
+            TextRenderer(unsigned int width, unsigned int height);
             float GetTextWidth(std::string& text);
             void RenderTextQuad(quad textquad, glm::vec3 color, std::string text);
             void RenderText(std::string& text, float x, float y, float scale, glm::vec3 color);
     };
-    TextRenderer::TextRenderer(RENDERER& rn):defaultShader("resources\\shaders\\text.vs", "resources\\shaders\\text.fs"){
+    TextRenderer::TextRenderer(unsigned int width, unsigned int height):defaultShader("resources\\shaders\\text.vs", "resources\\shaders\\text.fs"){
         int error=0;
-        glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(rn.width), 0.0f, static_cast<float>(rn.height));
+        glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(width), 0.0f, static_cast<float>(height));
         defaultShader.use();
         glUniformMatrix4fv(glGetUniformLocation(defaultShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         FT_Library ft;
