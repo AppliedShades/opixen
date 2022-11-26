@@ -2,6 +2,7 @@
 ### OpenGLPixelEngine - A minimal graphics framework built with cpp, mingw and opengl.
 
 ## Installation:
+* install gcc & add it in path. (*required)
 * Clone or download repository.
 * Play with the example app.
 * You can include opixen in your projects by copying the `include/opixen` to your project's include directory.
