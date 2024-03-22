@@ -1,5 +1,5 @@
 .vscode
-release
+release/*.exe
 result.txt
 errorLog.txt
 wip
