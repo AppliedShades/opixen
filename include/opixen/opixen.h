@@ -1,14 +1,15 @@
 #ifndef OPIXEN_H
 #define OPIXEN_H
+#include <windows.h>
 #include <vector>
 #include <string>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <glm/glmheaders.h>
 #include <opixen/error.h>
 #include <opixen/shader.h>
+#include <opixen/time.h>
+#include <opixen/surface.h>
 
 namespace OPIXEN{
     class OPIXEN{
@@ -21,6 +22,7 @@ namespace OPIXEN{
             void ClearFrame(){std::fill(screen.begin(), screen.end(), ClearColor);}
             void inline SetClearColor(unsigned int colorABGR){ClearColor=colorABGR;}
             void inline SetColor(glm::vec2 pos, unsigned int colorABGR);
+            void inline SetColor(glm::vec2 pos, glm::vec4 colorRGBA);
             unsigned int inline GetColor(glm::vec2 pos);
             std::vector<unsigned int> screen;
             std::vector<Shader> shaders;
@@ -42,6 +44,12 @@ namespace OPIXEN{
     }
     void inline OPIXEN::SetColor(glm::vec2 pos, unsigned int colorABGR){
         screen[width * pos.y + pos.x] = colorABGR;
+    }
+    void inline OPIXEN::SetColor(glm::vec2 pos, glm::vec4 colorRGBA){
+        screen[width * pos.y + pos.x] = static_cast<unsigned int>(colorRGBA.r * 255)
+            | static_cast<unsigned int>(colorRGBA.g * 255) << 8
+            | static_cast<unsigned int>(colorRGBA.b * 255) << 16
+            | static_cast<unsigned int>(colorRGBA.a * 255)<<24;
     }
     unsigned int inline OPIXEN::GetColor(glm::vec2 pos){
         return screen[width * pos.y + pos.x];
