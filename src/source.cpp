@@ -1,10 +1,51 @@
 #include <opixen/opixen.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+
 class MyApp{
     public:
-        MyApp(std::string TITLE, unsigned int WIDTH, unsigned int HEIGHT);
-        ~MyApp();
+        FT_Library library;
+        FT_Face face;
+        MyApp(std::string TITLE, unsigned int WIDTH, unsigned int HEIGHT):renderer(TITLE,WIDTH,HEIGHT){
+            if (FT_Init_FreeType(&library)) {
+                std::cerr << "Error: Failed to initialize FreeType library." << std::endl;
+                glfwSetWindowShouldClose(renderer.wnd, true);
+                closeApp();
+            }
+            std::cout << "FreeType library initialized successfully!" << std::endl;
+            std::string fontfile = "resources/fonts/ITCEDSCR.TTF";
+
+            if (FT_New_Face(library, fontfile.c_str(), 0, &face)) {
+                std::cerr << "Error: Could not load font file.\n";
+                glfwSetWindowShouldClose(renderer.wnd, true);
+                closeApp();
+            }
+
+            anim.setduration(4.0f);
+            updatereticle();
+            nextPos=glm::vec2(renderer.width,0);
+            anim.start(currentTime());
+            surface surf;
+            surf.metadata = "test surf width=100 height=100 width=200 channels=4";
+            setparam(surf.metadata, "width", "400");
+            std::string test = getparam(surf.metadata, "width");
+            std::cout << surf.metadata << std::endl;
+            std::cout << test << std::endl;
+            //surfaceinstance sinst = surfaceinstance::create(surf);
+            //std::cout << tostr(sinst.points[2]) << std::endl;
+        }
+        ~MyApp(){
+            FT_Done_Face(face);
+            FT_Done_FreeType(library);
+        }
         void Update();
         void Draw();
+        void closeApp(){
+            glfwSetWindowShouldClose(renderer.wnd, true);
+            AppRunning = false;
+        }
         void inline EndFrame(){renderer.EndFrame();}
         void run(){AppRunning=true; while(AppRunning){Update();Draw();EndFrame();}}
 
@@ -34,6 +75,60 @@ class MyApp{
                 }
             }
         }
+        void RenderText(const char* text, glm::vec2 startPos, int fontSize, glm::vec4 color) {
+            FT_Set_Pixel_Sizes(face, 0, fontSize);
+            glm::vec2 pos = startPos;
+            for (const char* p = text; *p; ++p) {
+                if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
+                    //std::cerr << "Error: Could not load character " << *p << ".\n";
+                    continue;
+                }
+        
+                FT_GlyphSlot g = face->glyph;
+                for (int row = 0; row < g->bitmap.rows; ++row) {
+                    for (int col = 0; col < g->bitmap.width; ++col) {
+                        unsigned char pixelValue = g->bitmap.buffer[row * g->bitmap.width + col];
+                        if (pixelValue > 0) {
+                            glm::vec2 pixelPos = glm::vec2(pos.x + g->bitmap_left + col, renderer.height - (pos.y - g->bitmap_top + row));
+                            if(pixelPos.x >= 0 && pixelPos.x < renderer.width && pixelPos.y >= 0 && pixelPos.y < renderer.height){
+                                renderer.SetColor(pixelPos, color);
+                            }
+                        }
+                    }
+                }
+                pos.x += g->advance.x >> 6; // Move to the next glyph position
+            }
+
+        }
+        void RenderTextAntiAliased(const char* text, glm::vec2 startPos, int fontSize, glm::vec4 color) {
+            FT_Set_Pixel_Sizes(face, 0, fontSize);
+            glm::vec2 pos = startPos;
+            for (const char* p = text; *p; ++p) {
+                if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
+                    //std::cerr << "Error: Could not load character " << *p << ".\n";
+                    continue;
+                }
+                
+                FT_GlyphSlot g = face->glyph;
+                FT_Bitmap bitmap;
+                FT_Render_Glyph(g, FT_RENDER_MODE_LCD);
+                bitmap = g->bitmap;
+                
+                for (int row = 0; row < bitmap.rows; ++row) {
+                    for (int col = 0; col < bitmap.width; ++col) {
+                        unsigned char pixelValue = bitmap.buffer[row * bitmap.width + col];
+                        if (pixelValue > 0) {
+                            glm::vec2 pixelPos = glm::vec2(pos.x + g->bitmap_left + col, renderer.height - (pos.y - g->bitmap_top + row));
+                            if(pixelPos.x >= 0 && pixelPos.x < renderer.width && pixelPos.y >= 0 && pixelPos.y < renderer.height){
+                                float alpha = pixelValue / 255.0f;
+                                renderer.BlendColor(pixelPos, glm::vec4(color.r, color.g, color.b, alpha));
+                            }
+                        }
+                    }
+                }
+                pos.x += g->advance.x >> 6; // Move to the next glyph position
+            }
+        }
     public:
         bool AppRunning = false;
         OPIXEN::OPIXEN renderer;
@@ -58,31 +153,12 @@ class MyApp{
         ////////////////////////////////////////////*
 };
 
-MyApp::MyApp(std::string TITLE, unsigned int WIDTH, unsigned int HEIGHT):renderer(TITLE,WIDTH,HEIGHT){
-    anim.setduration(4.0f);
-    updatereticle();
-    nextPos=glm::vec2(renderer.width,0);
-    anim.start(currentTime());
-    surface surf;
-    surf.metadata = "test surf width=100 height=100 width=200 channels=4";
-    setparam(surf.metadata, "width", "400");
-    std::string test = getparam(surf.metadata, "width");
-    std::cout << surf.metadata << std::endl;
-    std::cout << test << std::endl;
-    //surfaceinstance sinst = surfaceinstance::create(surf);
-    //std::cout << tostr(sinst.points[2]) << std::endl;
-}
-MyApp::~MyApp(){}
-
 void MyApp::Update(){
     
     //* GLFW, GLAD and GLM already included in opixen, so, you can easily call their functions! 
     
     //Input Handling
-    if (glfwGetKey(renderer.wnd, GLFW_KEY_ESCAPE) == GLFW_PRESS){
-        glfwSetWindowShouldClose(renderer.wnd, true);
-        AppRunning = false;
-    }
+    if (glfwGetKey(renderer.wnd, GLFW_KEY_ESCAPE) == GLFW_PRESS){ closeApp(); }
 
 
     //World Update
@@ -100,7 +176,8 @@ void MyApp::Draw(){
     drawrect(glm::vec2(renderer.width*0.1f,100.0f),glm::vec2(renderer.width*0.8f,5.0f),glm::vec2(0.0f,0.5f),glm::vec4(0.5f,0.5f,0.5f,1.0f));
     drawcircle(updatep,radius,updatec);
     drawcircle(glm::vec2(anim.getx(currentTime())*renderer.width*0.8f+ renderer.width*0.1f, 100.0f),20.0f,updatec);
-
+    float fontsize = 120.0f;
+    RenderTextAntiAliased("Hello World!", glm::vec2(100.0f, 300.0f+fontsize), fontsize, updatec);
 }
 
 //Trusty old Main Function:

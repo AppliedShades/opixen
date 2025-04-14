@@ -23,6 +23,7 @@ namespace OPIXEN{
             void inline SetClearColor(unsigned int colorABGR){ClearColor=colorABGR;}
             void inline SetColor(glm::vec2 pos, unsigned int colorABGR);
             void inline SetColor(glm::vec2 pos, glm::vec4 colorRGBA);
+            void inline BlendColor(glm::vec2 pos, glm::vec4 colorRGBA);
             unsigned int inline GetColor(glm::vec2 pos);
             std::vector<unsigned int> screen;
             std::vector<Shader> shaders;
@@ -50,6 +51,18 @@ namespace OPIXEN{
             | static_cast<unsigned int>(colorRGBA.g * 255) << 8
             | static_cast<unsigned int>(colorRGBA.b * 255) << 16
             | static_cast<unsigned int>(colorRGBA.a * 255)<<24;
+    }
+    void inline OPIXEN::BlendColor(glm::vec2 pos, glm::vec4 colorRGBA){
+        unsigned int prevcolor = screen[width * pos.y + pos.x];
+        glm::vec4 color_ = glm::vec4((prevcolor & 0xFF)/255.0f, ((prevcolor >> 8) & 0xFF)/255.0f, ((prevcolor >> 16) & 0xFF)/255.0f, ((prevcolor >> 24) & 0xFF)/255.0f);
+        color_ = lerp(color_,colorRGBA,colorRGBA.a);
+        color_.a = 1.0f;
+        
+
+        screen[width * pos.y + pos.x] = static_cast<unsigned int>(color_.r * 255)
+            | static_cast<unsigned int>(color_.g * 255) << 8
+            | static_cast<unsigned int>(color_.b * 255) << 16
+            | static_cast<unsigned int>(color_.a * 255)<<24;
     }
     unsigned int inline OPIXEN::GetColor(glm::vec2 pos){
         return screen[width * pos.y + pos.x];
